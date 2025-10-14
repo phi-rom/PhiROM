@@ -1,0 +1,46 @@
+#!/bin/bash
+
+LATENT_DIM=4
+WIDTH=32
+NODE_WIDTH=64
+LOSS='nmse'
+EVOLVE_START=1000
+DECODER=mlp
+NODE=hyper_concat
+TRAINING_MODE=jacobian_inverse
+BATCH_SIZE=800
+DECAY_STEPS=50
+N_SAMPLES=8
+MAX_STEP=100
+EPOCHS=12000
+DATASET='burgers'
+LR_DECODER=5e-3
+LR_NODE=-1
+LR_LATENT=-1
+ODE_SOLVER="bosh3"
+
+python3 ./script_burgers_NODE.py --decay_steps=$DECAY_STEPS \
+    --decay_rate=0.985 \
+    --activation="sin" \
+    --num_samples=$N_SAMPLES \
+    --max_step=$MAX_STEP \
+    --seed=102 \
+    --latent_dim=$LATENT_DIM \
+    --width=$WIDTH \
+    --node_width=$NODE_WIDTH \
+    --epochs=$EPOCHS \
+    --decoder_arch=$DECODER \
+    --node_arch=$NODE \
+    --node_training_mode=$TRAINING_MODE \
+    --loss=$LOSS \
+    --dataset=$DATASET \
+    --learning_rate_decoder=$LR_DECODER \
+    --learning_rate_node=$LR_NODE \
+    --learning_rate_latent=$LR_LATENT \
+    --batch_size=$BATCH_SIZE \
+    --evolve_start=$EVOLVE_START \
+    --ode_solver=$ODE_SOLVER \
+    --gamma=0.1 \
+    --loss_lambda=0.5 \
+    --pinn \
+    --prefix="4L4L";
