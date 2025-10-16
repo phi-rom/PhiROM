@@ -112,7 +112,7 @@ macro = Macroscopic(
 )
 bc_list = setup_boundaries(u_max)
 stepper = IncompressibleNavierStokesStepper(
-    grid=grid, boundary_conditions=bc_list, collision_type="BGK"
+    grid=grid, boundary_conditions=bc_list, collision_type="BGK", streaming_scheme="push"
 )
 stepper = distribute(stepper, grid, velocity_set)
 

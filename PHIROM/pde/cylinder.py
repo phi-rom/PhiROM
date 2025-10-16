@@ -284,7 +284,7 @@ def cylinder_residual_builder(
 
     bc_list = setup_boundaries(u_max)
     stepper = IncompressibleNavierStokesStepper(
-        grid=grid, boundary_conditions=bc_list, collision_type="BGK"
+        grid=grid, boundary_conditions=bc_list, collision_type="BGK", streaming_scheme="push"
     )
     stepper = distribute(stepper, grid, velocity_set)
     _, f1, bc_mask, missing_mask = stepper.prepare_fields()
