@@ -3,7 +3,7 @@ import os
 
 os.environ["EQX_ON_ERROR"] = "nan"
 os.environ["NVIDIA_TF32_OVERRIDE"] = "0"
-
+import sys
 
 from datetime import datetime
 from functools import partial
@@ -14,21 +14,21 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax as optx
-import XLB.xlb
+import xlb
 from jaxtyping import Array, PRNGKeyArray
 from torch.utils.data import DataLoader
-from XLB.xlb.operator.macroscopic import SecondMoment
+from xlb.operator.macroscopic import SecondMoment
 
 from PHIROM.modules.models import DecoderArchEnum, NodeROM
-from PHIROM.pde.cylinder_irreg import *
+from PHIROM.pde.lbm import *
 from PHIROM.pde.data_utils import JaxLoader, NumpyLoader
-from PHIROM.training.baseline import IrregularDINoTrainer
+from PHIROM.training.baseline import DINOTrainer
 from PHIROM.training.callbacks import (
     CheckpointCallback,
     NODEUnrollingEvaluationCallback,
     NODEUnrollingEvaluationCallbackXLB,
 )
-from PHIROM.training.train import IrregularPhiROMTrainer, NodeTrainingModeEnum
+from PHIROM.training.train import NodeTrainingModeEnum, PhiROMTrainer
 from PHIROM.utils.experiment_utils import *
 from PHIROM.utils.serial import load_model, make_CROMOffline, save_model
 
@@ -43,7 +43,6 @@ parser.add_argument("--dataset", type=str, default="cylinder_population")
 parser.add_argument("--prefix", type=str, default="")
 parser.add_argument("--seed", type=int, default=101)
 parser.add_argument("--loss", type=str, default="nmse")
-# parser.add_argument("--evolve_mode", type=str, default="label_label", choices=["label_label", "pred_pred", "pred_label"])
 parser.add_argument(
     "--ode_solver", type=str, default="bosh3", choices=["bosh3", "dopri5", "euler"]
 )
@@ -77,23 +76,7 @@ parser.add_argument(
     "--decoder_arch", type=str, default="hyper", choices=["mlp", "hyper"]
 )
 parser.add_argument(
-    "--node_arch",
-    type=str,
-    default="hyper_concat",
-    choices=[
-        "mlp",
-        "hyper",
-        "hyperV2",
-        "hyper_add_v1",
-        "hyper_add_v2",
-        "hyper_multip_v1",
-        "hyper_multip_v2",
-        "hyper_add_v3",
-        "hyper_bias",
-        "hyper_add_v4",
-        "hyper_multip_v4",
-        "hyper_concat",
-    ],
+    "--node_arch", type=str, default="hyper_concat", choices=["mlp", "hyper_concat"]
 )
 parser.add_argument(
     "--node_training_mode",
@@ -156,14 +139,10 @@ loss_lambda = args.loss_lambda
 
 node_training_mode = args.node_training_mode
 
-if "ins=5" in dataset_name:
-    start_time = 0
-else:
-    start_time = 300
-print("start_time:", start_time)
+start_time = 300
 paramed = True
 path = f"./data/{dataset_name}.h5"
-test_dataset_path = f"./data/{dataset_name}_test.h5"
+test_dataset_path = f"./data/{dataset_name}.h5"
 
 if paramed:
     param_dim = 1
@@ -174,19 +153,19 @@ else:
 
 if autodecoder:
     if not DINO:
-        dataset_train = IrregularCylindeDatasetTorch(
+        dataset_train = LBMDatasetTorch(
             path, start_time, max_step, indices=(0, num_samples), paramed=paramed
         )
     else:
-        dataset_train = IrregularCylinderTrajDatasetTorch(
+        dataset_train = LBMTrajDatasetTorch(
             path, start_time, max_step, indices=(0, num_samples), paramed=paramed
         )
-    dataset_validation = IrregularCylinderTrajDatasetTorch(
-        test_dataset_path, start_time, max_step + 50, paramed=paramed, indices=(0, 8)
-    )
-    subdataset_train = IrregularCylinderTrajDatasetTorch(
-        path, start_time, max_step + 50, paramed=paramed, indices=[0, 10, 20, 30]
-    )
+    dataset_validation = LBMTrajDatasetTorch(
+            path, start_time, max_step+50, indices=(0, num_samples), paramed=paramed
+        )
+    subdataset_train = LBMTrajDatasetTorch(
+            path, start_time, max_step + 50, indices=(0, num_samples), paramed=paramed
+        )
 else:
     raise NotImplementedError("AE Not implemented")
 
@@ -212,6 +191,7 @@ if not DINO:
 MEAN, STD = dataset_train.compute_mean_std_fields()
 nx = dataset_train.x.shape[0]
 ny = dataset_train.y.shape[0]
+
 
 hyperparams = {
     "latent_dim": latent_dim,
@@ -270,16 +250,13 @@ path_checkpoint = os.path.join(path_experiment, "checkpoints")
 Path(path_experiment).mkdir(parents=True, exist_ok=True)
 
 key, subkey = jax.random.split(key)
-
-
 print(hyperparams)
-
 
 if not DINO:
     backend = ComputeBackend.JAX
     precision_policy = PrecisionPolicy.FP32FP32
     velocity_set = xlb.velocity_set.D2Q9(
-        precision_policy=precision_policy, backend=backend
+        precision_policy=precision_policy, compute_backend=backend
     )
     xlb.init(
         velocity_set=velocity_set,
@@ -312,7 +289,7 @@ if not DINO:
         + (X[:, 1] - 2.0 * cylinder_diameter) ** 2
         < cyliner_radius**2
     )
-    evolve_fn = cylinder_residual_builder(
+    evolve_fn = lbm_residual_builder(
         u_max,
         grid,
         grid_shape,
@@ -397,7 +374,7 @@ if DINO:
         learning_rate_latent > 0
     ), "Learning rate for latent variable must be positive"
     optimizer_latent = optx.adam(scheduler_latent)
-    trainer = IrregularDINoTrainer(
+    trainer = DINOTrainer(
         model=model,
         model_state=model_state,
         optimizer=optimizer,
@@ -463,7 +440,7 @@ else:
         optimizer_latent = optx.adamw(scheduler_latent)
     else:
         optimizer_latent = None
-    trainer = IrregularPhiROMTrainer(
+    trainer = PhiROMTrainer(
         model=model,
         model_state=model_state,
         optimizer=optimizer,
@@ -481,7 +458,6 @@ else:
         key=subkey,
         xlb_macro=xlb_macro,
         xlb_second_moment=xlb_second_moment,
-        mask_indices=None,
         loss_lambda=loss_lambda,
     )
 

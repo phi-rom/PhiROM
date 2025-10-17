@@ -1,8 +1,6 @@
 import os
 import sys
 
-path = os.path.abspath("../../XLB")
-sys.path.insert(0, path)
 
 import h5py as h5
 import jax
@@ -25,7 +23,7 @@ from xlb.operator.stepper import IncompressibleNavierStokesStepper
 from xlb.precision_policy import PrecisionPolicy
 
 
-class CylinderDatasetTorch(Dataset):
+class LBMDatasetTorch(Dataset):
 
     def __init__(
         self,
@@ -139,7 +137,7 @@ class CylinderDatasetTorch(Dataset):
         )
 
 
-class CylinderTrajDatasetTorch(Dataset):
+class LBMTrajDatasetTorch(Dataset):
 
     def __init__(self, path, start_time, num_time_steps, indices=None, paramed=False):
         self.num_time_steps = num_time_steps
@@ -233,7 +231,7 @@ class CylinderTrajDatasetTorch(Dataset):
         )
 
 
-def cylinder_residual_builder(
+def lbm_residual_builder(
     u_max, grid, grid_shape, cylinder_diameter, velocity_set, macro, window_length=20.0
 ):
 
@@ -284,7 +282,7 @@ def cylinder_residual_builder(
 
     bc_list = setup_boundaries(u_max)
     stepper = IncompressibleNavierStokesStepper(
-        grid=grid, boundary_conditions=bc_list, collision_type="BGK"
+        grid=grid, boundary_conditions=bc_list, collision_type="BGK", streaming_scheme="push"
     )
     stepper = distribute(stepper, grid, velocity_set)
     _, f1, bc_mask, missing_mask = stepper.prepare_fields()

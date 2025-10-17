@@ -24,7 +24,7 @@ from xlb.precision_policy import PrecisionPolicy
 print(xlb.__file__)
 
 
-class IrregularCylindeDatasetTorch(Dataset):
+class IrregularLBMDatasetTorch(Dataset):
 
     def __init__(
         self,
@@ -157,7 +157,7 @@ class IrregularCylindeDatasetTorch(Dataset):
         )
 
 
-class IrregularCylinderTrajDatasetTorch(Dataset):
+class IrregularLBMTrajDatasetTorch(Dataset):
 
     def __init__(self, path, start_time, num_time_steps, indices=None, paramed=False):
         self.num_time_steps = num_time_steps
@@ -265,7 +265,7 @@ class IrregularCylinderTrajDatasetTorch(Dataset):
         )
 
 
-def cylinder_residual_builder(
+def lbm_residual_builder(
     u_max, grid, grid_shape, cylinder_diameter, velocity_set, macro, window_length=20.0
 ):
 
@@ -316,25 +316,11 @@ def cylinder_residual_builder(
 
     bc_list = setup_boundaries(u_max)
     stepper = IncompressibleNavierStokesStepper(
-        grid=grid, boundary_conditions=bc_list, collision_type="BGK"
+        grid=grid, boundary_conditions=bc_list, collision_type="BGK", streaming_scheme="push"
     )
     stepper = distribute(stepper, grid, velocity_set)
     _, f1, bc_mask, missing_mask = stepper.prepare_fields()
     print("XLB Solver, # steps: ", window_length)
-
-    # def residual(population, dt, dx, omega, *args):
-    #     residual = 0
-    #     f1 = field1
-    #     f0 = population
-    #     for _ in range(window_length):
-    #         _, velocity_current = macro(f0)
-    #         f0, f1 = stepper(f0, f1, bc_mask, missing_mask, omega, 0)
-    #         f0, f1 = f1, f0
-    #         _, velocity_next = macro(f0)
-    #         residual += velocity_next - velocity_current
-
-    #     return residual / window_length
-    # return residual
 
     def residual(population, dt, dx, omega, *args):
         residual = 0.0
@@ -344,32 +330,12 @@ def cylinder_residual_builder(
                 population_prev, f1, bc_mask, missing_mask, omega, 0
             )
 
-            # _, velocity_next = macro(population_next)
-            # _, velocity_prev = macro(population_prev)
             residual += population_next - population_prev
             population_prev = population_next
 
         return residual / window_length
-        # return population_next
 
     return residual
-
-    # def residual(population, dt, dx, omega, *args):
-    #     residual = 0
-    #     population_prev = population
-    #     for _ in range(window_length):
-    #         _, population_next = stepper(population_prev, f1, bc_mask, missing_mask, omega, 0)
-
-    #         # # _, velocity_next = macro(population_next)
-    #         # # _, velocity_prev = macro(population_prev)
-    #         # residual += population_next - population_prev
-    #         population_prev = population_next
-
-    #     return (population_next - population) / window_length
-    #     # return population_next
-
-    # return residual
-
 
 def d2q9_to_velocity(field, macro):
     _, u = macro(field)
