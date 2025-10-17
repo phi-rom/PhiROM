@@ -4,34 +4,29 @@ LATENT_DIM=4
 WIDTH=64
 NODE_WIDTH=64
 LOSS='nmse'
-EVOLVE_START=2000 
+EVOLVE_START=0
 DECODER=mlp
 NODE=hyper_concat
-TRAINING_MODE=jacobian_inverse
-BATCH_SIZE=500
-
-DECAY_STEPS=40 
+TRAINING_MODE=labels
+BATCH_SIZE=10
+DECAY_STEPS=200
 N_SAMPLES=40
-MAX_STEP=100  
-EPOCHS=20000 
-DATASET='cylinder_population_ins=5_N40_IRREGULAR0.02'
-LR_DECODER=1e-3
-SOLVER_STEPS=5
-LR_NODE=-1
-LR_LATENT=-1
+MAX_STEP=100
+EPOCHS=20000
+DATASET='lbm_population_ins=5_N40_IRREGULAR0.02'
+LR_DECODER=1e-2
+LR_NODE=1e-3
+LR_LATENT=1e-3
 ODE_SOLVER="bosh3"
 ACTIVATION='sin'
 
-GAMMA=0.1 # Subsampling rate for the QR decomposition 
-
-PREFIX="6L3L_5STEPS" 
+PREFIX="6L3L" 
 
 for SEED in 102;
     do
-    NVIDIA_TF32_OVERRIDE=0 python3 ./script_cylinder_irregular.py --decay_steps=$DECAY_STEPS \
+    NVIDIA_TF32_OVERRIDE=0 python3 ./script_lbm_irregular.py --decay_steps=$DECAY_STEPS \
         --activation=$ACTIVATION \
-        --node_activation=swish \
-        --gamma=$GAMMA \
+        --gamma=0.99 \
         --decay_rate=0.985 \
         --num_samples=$N_SAMPLES \
         --max_step=$MAX_STEP \
@@ -51,11 +46,7 @@ for SEED in 102;
         --batch_size=$BATCH_SIZE \
         --evolve_start=$EVOLVE_START \
         --ode_solver=$ODE_SOLVER \
-        --solver_steps=$SOLVER_STEPS \
-        --loss_lambda=0.8 \
         --normalize \
-        --adaptive \
-        --max_ode_steps=100 \
-        --final_lr=1e-6 \
+        --dino \
         --prefix=$PREFIX;
     done;

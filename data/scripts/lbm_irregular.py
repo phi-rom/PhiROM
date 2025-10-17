@@ -35,7 +35,7 @@ backend = ComputeBackend.JAX
 precision_policy = PrecisionPolicy.FP32FP32
 
 # choose the velocity set
-velocity_set = xlb.velocity_set.D2Q9(precision_policy=precision_policy, backend=backend)
+velocity_set = xlb.velocity_set.D2Q9(precision_policy=precision_policy, compute_backend=backend)
 
 # configure the geometry and resolution of the computational grid
 cylinder_diameter = 20
@@ -107,7 +107,7 @@ macro = Macroscopic(
     compute_backend=ComputeBackend.JAX,
     precision_policy=precision_policy,
     velocity_set=xlb.velocity_set.D2Q9(
-        precision_policy=precision_policy, backend=ComputeBackend.JAX
+        precision_policy=precision_policy, compute_backend=ComputeBackend.JAX
     ),
 )
 bc_list = setup_boundaries(u_max)
@@ -199,4 +199,6 @@ dataset = xr.Dataset(
     },
 )
 
-dataset.to_netcdf(f"cylinder_population_ins=5_N40_IRREGULAR{SUB_RATIO}.h5")
+dataset.to_netcdf(f"lbm_population_ins=5_N40_IRREGULAR{SUB_RATIO}.h5")
+
+# dataset.to_netcdf(f"lbm_ins=5_N40_IRREGULAR{SUB_RATIO}.h5") # if velocity for DINo

@@ -14,10 +14,10 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax as optx
-import XLB.xlb
+import xlb
 from jaxtyping import Array, PRNGKeyArray
 from torch.utils.data import DataLoader
-from XLB.xlb.operator.macroscopic import SecondMoment
+from xlb.operator.macroscopic import SecondMoment
 
 from PHIROM.modules.models import DecoderArchEnum, NodeROM
 from PHIROM.pde.lbm_irreg import *
@@ -174,17 +174,17 @@ else:
 
 if autodecoder:
     if not DINO:
-        dataset_train = IrregularCylindeDatasetTorch(
+        dataset_train = IrregularLBMDatasetTorch(
             path, start_time, max_step, indices=(0, num_samples), paramed=paramed
         )
     else:
-        dataset_train = IrregularCylinderTrajDatasetTorch(
+        dataset_train = IrregularLBMTrajDatasetTorch(
             path, start_time, max_step, indices=(0, num_samples), paramed=paramed
         )
-    dataset_validation = IrregularCylinderTrajDatasetTorch(
+    dataset_validation = IrregularLBMTrajDatasetTorch(
         test_dataset_path, start_time, max_step + 50, paramed=paramed, indices=(0, 8)
     )
-    subdataset_train = IrregularCylinderTrajDatasetTorch(
+    subdataset_train = IrregularLBMTrajDatasetTorch(
         path, start_time, max_step + 50, paramed=paramed, indices=[0, 10, 20, 30]
     )
 else:
@@ -279,7 +279,7 @@ if not DINO:
     backend = ComputeBackend.JAX
     precision_policy = PrecisionPolicy.FP32FP32
     velocity_set = xlb.velocity_set.D2Q9(
-        precision_policy=precision_policy, backend=backend
+        precision_policy=precision_policy, compute_backend=backend
     )
     xlb.init(
         velocity_set=velocity_set,
@@ -312,7 +312,7 @@ if not DINO:
         + (X[:, 1] - 2.0 * cylinder_diameter) ** 2
         < cyliner_radius**2
     )
-    evolve_fn = cylinder_residual_builder(
+    evolve_fn = lbm_residual_builder(
         u_max,
         grid,
         grid_shape,
