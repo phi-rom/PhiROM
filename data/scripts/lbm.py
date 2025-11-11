@@ -151,7 +151,7 @@ dataset = xr.Dataset(
     {
         "u": (
             ("batch", "time", "field", "x", "y"),
-            trajs[:600:],
+            trajs[:, 600:],
         ),  # discard the first 600 steps (undeveloped flow)
         "omega": (("batch",), omegas),
         "reynolds": (("batch",), reynolds),
@@ -159,7 +159,7 @@ dataset = xr.Dataset(
     coords={"x": x, "y": y},
     attrs={
         "inner_step": 5,
-        "outer_steps": 500,
+        "outer_steps": 400,
         "cylinder_diameter": cylinder_diameter,
         "inlet_velocity_mean": inlet_velocity_mean,
         "u_max": u_max,

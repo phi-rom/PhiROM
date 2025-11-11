@@ -192,7 +192,7 @@ dataset = xr.Dataset(
     coords={"x": x, "y": y},
     attrs={
         "inner_step": 5,
-        "outer_steps": 1000,
+        "outer_steps": 400,
         "cylinder_diameter": cylinder_diameter,
         "inlet_velocity_mean": inlet_velocity_mean,
         "u_max": u_max,
