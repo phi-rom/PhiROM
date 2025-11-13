@@ -8,6 +8,8 @@ This repository contains the official JAX implementation for the paper **"Physic
 
 $\Phi$-ROM is a novel framework for creating **Physics-informed Reduced-Order Models** for time-dependent and parameterized Partial Differential Equations (PDEs). It incorporates **differentiable PDE solvers** directly into the training loop, ensuring the learned latent dynamics align closely with the discretized governing physics. This approach enhances generalization to unseen parameters, improves long-term forecasting, and works effectively even with sparse or irregular data.
 
+![PhiROM Overview](assets/phirom.svg)
+
 ---
 ## Key Features ✨
 
