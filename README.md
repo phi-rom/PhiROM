@@ -2,8 +2,6 @@
 
 [![NeurIPS 2025](https://img.shields.io/badge/NeurIPS-2025-blue)](https://neurips.cc/virtual/2025/poster/117995) [![Website](https://img.shields.io/badge/Website-phi--rom.github.io-green)](https://phi-rom.github.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) 
 
-**🚧 This repository is currently being updated. Please check back soon for more information. 🚧**
-
 This repository contains the official JAX implementation for the paper **"Physics-informed Reduced Order Modeling of Time-dependent PDEs via Differentiable Solvers"**, accepted at NeurIPS 2025.
 
 $\Phi$-ROM is a novel framework for creating **Physics-informed Reduced-Order Models** for time-dependent and parameterized Partial Differential Equations (PDEs). It incorporates **differentiable PDE solvers** directly into the training loop, ensuring the learned latent dynamics align closely with the discretized governing physics. This approach enhances generalization to unseen parameters, improves long-term forecasting, and works effectively even with sparse or irregular data.
@@ -57,7 +55,7 @@ $\Phi$-ROM is a novel framework for creating **Physics-informed Reduced-Order Mo
     source phirom_env/bin/activate 
     ````
 3.  **Install dependencies:**
-    Phi-ROM requires JAX with GPU support. The requirements specify JAX with CUDA 12 support.
+    Phi-ROM requires JAX with GPU support. The code was tested with JAX 0.7.0 and CUDA 12.
     ````bash
     pip install -r requirements.txt
     ````
@@ -69,9 +67,9 @@ $\Phi$-ROM is a novel framework for creating **Physics-informed Reduced-Order Mo
     ````
 
     3.2 **Install XLB**
-    To run the Lattice Boltzmann experiments, install the latest [XLB](https://github.com/Autodesk/XLB) library:
+    To run the Lattice Boltzmann experiments, install the following version of the [XLB](https://github.com/Autodesk/XLB) library:
     ````bash
-    pip install git+https://github.com/Autodesk/XLB.git
+    pip install git+https://github.com/Autodesk/XLB.git@f7e1b9d49c13f4fd518f3ff39f834d6b9e86d092
     ````
 ---
 
@@ -109,7 +107,7 @@ Refer to the individual `script_*.py` files and the `experiments/*.sh` scripts f
 The `PHIROM/training/evaluation.py` and `PHIROM/modules/inference.py` modules contain functions for evaluating trained models and performing inference (forecasting). The training scripts utilize evaluation callbacks (`PHIROM/training/callbacks.py`) to monitor performance during training.
 
 -----
-## Extending $\Phi$-ROM to New PDEs and Solvers🛠️
+## Extending $\Phi$-ROM to New PDEs and Solvers 🛠️
 To extend $\Phi$-ROM to a new time-dependent PDE with a differentiable numerical solver implemented in JAX, follow these steps:
 
 1. **Implement the PDE Class**: Create a new dataset class in `PHIROM/pde/` that loads the PDE data, including methods for data loading and normalization.
@@ -208,14 +206,11 @@ Now you can use the new dataset and solver to train 𝚽-ROM (see the [training 
 
 ## Citation 📝
 
-If you find this work useful, please cite our NeurIPS 2025 paper:
-
 ````bibtex
-@inproceedings{hosseini2025phirom,
-  title={{Physics-informed Reduced Order Modeling of Time-dependent PDEs via Differentiable Solvers}},
-  author={Hosseini Dashtbayaz, Nima and Salehipour, Hesam and Butscher, Adrian and Morris, Nigel},
-  booktitle={Advances in Neural Information Processing Systems},
-  year={2025},
-  volume={39}
+@article{hosseini2025phirom,
+  title   = {Physics-informed Reduced Order Modeling of Time-dependent PDEs via Differentiable Solvers},
+  author  = {Nima Hosseini Dashtbayaz and Hesam Salehipour and Adrian Butscher and Nigel Morris},
+  year    = {2025},
+  journal = {arXiv preprint arXiv: 2505.14595}
 }
 ````
